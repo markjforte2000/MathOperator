@@ -1,0 +1,10 @@
+apiVersion: math.example.com/v1alpha1
+kind: Math
+metadata:
+  name: math-sample
+  namespace: mathoperator-system
+spec:
+  expression: "5 + 3 * (7 - x)"
+  variables:
+    x: "7"
+

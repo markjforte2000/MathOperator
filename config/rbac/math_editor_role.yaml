@@ -1,0 +1,24 @@
+# permissions for end users to edit maths.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: math-editor-role
+rules:
+- apiGroups:
+  - math.example.com
+  resources:
+  - maths
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - math.example.com
+  resources:
+  - maths/status
+  verbs:
+  - get
