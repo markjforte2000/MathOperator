@@ -27,8 +27,8 @@ type Variable struct {
 
 // MathSpec defines the desired state of Math
 type MathSpec struct {
-	Expression string     `json:"expression"`
-	Variables  []Variable `json:"variables"`
+	Expression string              `json:"expression"`
+	Variables  map[string]Variable `json:"variables"`
 }
 
 // MathStatus defines the observed state of Math
