@@ -1,0 +1,11 @@
+apiVersion: math.example.com/v1beta1
+kind: Math
+metadata:
+  name: math-sample
+spec:
+  expression: "5 + 3 * (7 - x)"
+  variables:
+    x:
+      type: "float"
+      value: "7"
+
