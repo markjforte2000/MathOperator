@@ -2,10 +2,11 @@ apiVersion: math.example.com/v1beta1
 kind: Math
 metadata:
   name: math-sample
+  namespace: mathoperator-system
 spec:
   expression: "5 + 3 * (7 - x)"
   variables:
     x:
       type: "float"
-      value: "7"
+      value: "1"
 

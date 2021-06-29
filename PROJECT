@@ -24,4 +24,7 @@ resources:
   kind: Math
   path: github.com/example/math-operator/api/v1beta1
   version: v1beta1
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 version: "3"

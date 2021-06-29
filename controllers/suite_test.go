@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	mathv1beta1 "github.com/example/math-operator/api/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,6 +71,9 @@ var _ = BeforeSuite(func() {
 	err = mathv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = mathv1beta1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	//+kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
@@ -109,7 +113,7 @@ var _ = Describe("Math Controller", func() {
 		It("Should set Status.Result to the result of the specified equation", func() {
 			By("Doing Math")
 			ctx := context.Background()
-			mathJob := &mathv1alpha1.Math{
+			mathJob := &mathv1beta1.Math{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "math.example.com/v1",
 					Kind:       "Math",
@@ -118,17 +122,20 @@ var _ = Describe("Math Controller", func() {
 					Name:      MathName,
 					Namespace: MathNamespace,
 				},
-				Spec: mathv1alpha1.MathSpec{
+				Spec: mathv1beta1.MathSpec{
 					Expression: "3 * x + 7",
-					Variables: map[string]string{
-						"x": "4",
+					Variables: map[string]mathv1beta1.Variable{
+						"x": {
+							Type:  "float",
+							Value: "4",
+						},
 					},
 				},
 			}
 			Expect(k8sClient.Create(ctx, mathJob)).Should(Succeed())
 
 			mathLookupKey := types.NamespacedName{Name: MathName, Namespace: MathNamespace}
-			createdMath := &mathv1alpha1.Math{}
+			createdMath := &mathv1beta1.Math{}
 
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, mathLookupKey, createdMath)
@@ -139,23 +146,26 @@ var _ = Describe("Math Controller", func() {
 			}, timeout, interval).Should(BeTrue())
 
 			Expect(createdMath.Spec.Expression).Should(Equal("3 * x + 7"))
-			Expect(createdMath.Spec.Variables).Should(Equal(map[string]string{"x": "4"}))
+			//Expect(createdMath.Spec.Variables).Should(Equal(map[string]string{"x": "4"}))
 
-			testMath := &mathv1alpha1.Math{
+			testMath := &mathv1beta1.Math{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "testmathname",
 					Namespace: MathNamespace,
 				},
-				Spec: mathv1alpha1.MathSpec{
+				Spec: mathv1beta1.MathSpec{
 					Expression: "3 * x + 7",
-					Variables: map[string]string{
-						"x": "4",
+					Variables: map[string]mathv1beta1.Variable{
+						"x": {
+							Type:  "float",
+							Value: "4",
+						},
 					},
 				},
 			}
 
-			kind := reflect.TypeOf(mathv1alpha1.Math{}).Name()
-			gvk := mathv1alpha1.GroupVersion.WithKind(kind)
+			kind := reflect.TypeOf(mathv1beta1.Math{}).Name()
+			gvk := mathv1beta1.GroupVersion.WithKind(kind)
 
 			controllerRef := metav1.NewControllerRef(createdMath, gvk)
 			testMath.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})

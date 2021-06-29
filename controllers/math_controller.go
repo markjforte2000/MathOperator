@@ -18,16 +18,16 @@ package controllers
 
 import (
 	"context"
+	errors2 "errors"
 	"fmt"
 	"github.com/Knetic/govaluate"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"strconv"
-
-	mathv1alpha1 "github.com/example/math-operator/api/v1alpha1"
+	mathv1beta1 "github.com/example/math-operator/api/v1beta1"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 )
 
 // MathReconciler reconciles a Math object
@@ -51,7 +51,7 @@ func (r *MathReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	_ = r.Log.WithValues("math", req.NamespacedName)
 
 	// load math object with current Spec and Status from current context
-	math := mathv1alpha1.Math{}
+	math := mathv1beta1.Math{}
 	err := r.Get(ctx, req.NamespacedName, &math)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -89,11 +89,25 @@ func (r *MathReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *MathReconciler) parseVariablesFromSpec(spec mathv1alpha1.MathSpec) (map[string]interface{}, error) {
+func (r *MathReconciler) parseVariablesFromSpec(spec mathv1beta1.MathSpec) (map[string]interface{}, error) {
 	variables := spec.Variables
 	formattedParameters := make(map[string]interface{}, len(variables))
-	for key, value := range variables {
-		formattedValue, err := strconv.ParseFloat(value, 64)
+	for key, variablePair := range variables {
+		var formattedValue interface{}
+		var err error
+		switch variablePair.Type {
+		case "float":
+			formattedValue, err = strconv.ParseFloat(variablePair.Value, 64)
+			break
+		case "int":
+			formattedValue, err = strconv.ParseInt(variablePair.Value, 10, 32)
+			break
+		case "bool":
+			formattedValue, err = strconv.ParseBool(variablePair.Value)
+			break
+		default:
+			err = errors2.New(fmt.Sprintf("unknown type: %v", variablePair.Type))
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -102,10 +116,9 @@ func (r *MathReconciler) parseVariablesFromSpec(spec mathv1alpha1.MathSpec) (map
 	return formattedParameters, nil
 }
 
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *MathReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&mathv1alpha1.Math{}).
+		For(&mathv1beta1.Math{}).
 		Complete(r)
 }

@@ -39,6 +39,7 @@ type MathStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:storageversion
 
 // Math is the Schema for the maths API
 type Math struct {
